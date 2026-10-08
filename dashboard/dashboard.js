@@ -65,42 +65,51 @@
     }
   });
 
-  var map = L.map("leafletMap").setView([20, 0], 2);
+  // Map is optional: if the Leaflet CDN fails (ad-blocker/offline),
+  // stats + table + buttons must still work.
+  var map = null;
+  if (typeof L === "undefined") {
+    document.getElementById("leafletMap").innerHTML =
+      '<div class="map-error">Map library could not load (check internet or ad-blocker). ' +
+      "Table and stats below still work.</div>";
+  } else {
+    map = L.map("leafletMap").setView([20, 0], 2);
 
-  var osmMap = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-  });
-
-  var esriSat = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    {
+    var osmMap = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
-      attribution:
-        "Imagery &copy; Esri, Maxar, Earthstar Geographics",
-    }
-  );
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    });
 
-  // Transparent street/place labels to overlay on satellite = Hybrid view.
-  var labelOverlay = L.tileLayer(
-    "https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png",
-    {
-      maxZoom: 19,
-      subdomains: "abcd",
-      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
-    }
-  );
+    var esriSat = L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      {
+        maxZoom: 19,
+        attribution:
+          "Imagery &copy; Esri, Maxar, Earthstar Geographics",
+      }
+    );
 
-  var hybrid = L.layerGroup([esriSat, labelOverlay]);
+    // Transparent street/place labels to overlay on satellite = Hybrid view.
+    var labelOverlay = L.tileLayer(
+      "https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png",
+      {
+        maxZoom: 19,
+        subdomains: "abcd",
+        attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+      }
+    );
 
-  hybrid.addTo(map); // default view = Hybrid
-  L.control
-    .layers(
-      { Hybrid: hybrid, Satellite: esriSat, Map: osmMap },
-      null,
-      { position: "topright" }
-    )
-    .addTo(map);
+    var hybrid = L.layerGroup([esriSat, labelOverlay]);
+
+    hybrid.addTo(map); // default view = Hybrid
+    L.control
+      .layers(
+        { Hybrid: hybrid, Satellite: esriSat, Map: osmMap },
+        null,
+        { position: "topright" }
+      )
+      .addTo(map);
+  }
   var markers = [];
   var markerBySession = {};
 
@@ -121,18 +130,22 @@
   }
 
   function renderMarkers(list) {
-    markers.forEach(function (m) { map.removeLayer(m); });
+    if (map) {
+      markers.forEach(function (m) { map.removeLayer(m); });
+    }
     markers = [];
     markerBySession = {};
     var bounds = [];
     // Oldest-first so newest markers sit on top.
     list.slice().reverse().forEach(function (l) {
       if (typeof l.latitude !== "number" || typeof l.longitude !== "number") return;
+      if (!map) return;
       var m = L.marker([l.latitude, l.longitude]).addTo(map).bindPopup(popupHtml(l));
       markers.push(m);
       markerBySession[l.session_id] = { marker: m, loc: l };
       bounds.push([l.latitude, l.longitude]);
     });
+    if (!map) return;
     if (bounds.length === 1) map.setView(bounds[0], 13);
     else if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30] });
   }
@@ -203,7 +216,7 @@
         for (var k = 0; k < btns.length; k++) btns[k].classList.remove("active");
         b.classList.add("active");
         var entry = markerBySession[l.session_id];
-        if (entry && typeof entry.loc.latitude === "number") {
+        if (map && entry && typeof entry.loc.latitude === "number") {
           map.setView([entry.loc.latitude, entry.loc.longitude], 15);
           entry.marker.openPopup();
         }
