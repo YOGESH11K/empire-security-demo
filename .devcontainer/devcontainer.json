@@ -1,0 +1,12 @@
+{
+  "name": "Empire Security Demo",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "postCreateCommand": "pip install -r backend/requirements.txt",
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": {
+      "label": "Empire Security Demo",
+      "onAutoForward": "openPreview"
+    }
+  }
+}
