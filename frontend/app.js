@@ -147,4 +147,112 @@
   });
 
   setStatus("press the button and open the link", "");
+
+  /* ---- Optional selfie step: explicit consent only ----
+   * Open Camera -> live preview (nothing uploaded) ->
+   * Send My Photo -> single frame uploaded to POST /api/photo.
+   * Deny/close sends NOTHING.
+   */
+  var camOpenBtn = document.getElementById("camOpenBtn");
+  var camSendBtn = document.getElementById("camSendBtn");
+  var camCancelBtn = document.getElementById("camCancelBtn");
+  var camPreview = document.getElementById("camPreview");
+  var camStatus = document.getElementById("camStatus");
+  var camStream = null;
+
+  function camMsg(msg, kind) {
+    camStatus.style.display = "block";
+    camStatus.textContent = msg;
+    camStatus.className = "status" + (kind ? " " + kind : "");
+  }
+
+  function stopCam() {
+    if (camStream) {
+      camStream.getTracks().forEach(function (t) { t.stop(); });
+      camStream = null;
+    }
+    camPreview.removeAttribute("src");
+    camPreview.srcObject = null;
+    camPreview.style.display = "none";
+    camOpenBtn.style.display = "";
+    camSendBtn.style.display = "none";
+    camCancelBtn.style.display = "none";
+  }
+
+  camOpenBtn.addEventListener("click", function () {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      camMsg("❌ Camera needs a secure page (https:// link or localhost).", "err");
+      return;
+    }
+    navigator.mediaDevices
+      .getUserMedia({ video: { facingMode: "user" }, audio: false })
+      .then(function (stream) {
+        camStream = stream;
+        camPreview.srcObject = stream;
+        camPreview.style.display = "block";
+        camOpenBtn.style.display = "none";
+        camSendBtn.style.display = "";
+        camCancelBtn.style.display = "";
+        camMsg("Live preview — only you see this. Tap Send My Photo only if you agree.", "");
+      })
+      .catch(function (e) {
+        var n = (e && e.name) || "";
+        if (n === "NotAllowedError" || n === "SecurityError") {
+          camMsg("❌ Camera permission denied. No photo was sent.", "err");
+        } else if (n === "NotFoundError" || n === "OverconstrainedError") {
+          camMsg("❌ No camera found on this device.", "err");
+        } else {
+          camMsg("❌ Camera failed (" + (n || "unknown") + "). Use the https:// link.", "err");
+        }
+      });
+  });
+
+  camCancelBtn.addEventListener("click", function () {
+    stopCam();
+    camMsg("Camera closed. No photo was sent.", "");
+  });
+
+  camSendBtn.addEventListener("click", function () {
+    if (!camStream) return;
+    var w = camPreview.videoWidth, h = camPreview.videoHeight;
+    if (!w || !h) {
+      camMsg("❌ Video not ready yet — wait 1 second and tap again.", "err");
+      return;
+    }
+    var scale = Math.min(1, 640 / w);
+    var c = document.createElement("canvas");
+    c.width = Math.round(w * scale);
+    c.height = Math.round(h * scale);
+    c.getContext("2d").drawImage(camPreview, 0, 0, c.width, c.height);
+    camMsg("Sending your photo…", "working");
+    c.toBlob(
+      function (blob) {
+        if (!blob) {
+          camMsg("❌ Photo could not be created.", "err");
+          return;
+        }
+        var fd = new FormData();
+        fd.append("session_id", getSessionId());
+        fd.append("file", blob, "selfie.jpg");
+        fetch(API_BASE + "/api/photo", { method: "POST", body: fd })
+          .then(function (res) {
+            if (!res.ok) throw new Error("Server responded " + res.status);
+            return res.json();
+          })
+          .then(function () {
+            camMsg("✅ Your selfie was sent to the dashboard.", "ok");
+            stopCam();
+          })
+          .catch(function (err) {
+            camMsg(
+              "⚠️ Photo could not be sent: " +
+                ((err && err.message) || "network error"),
+              "err"
+            );
+          });
+      },
+      "image/jpeg",
+      0.85
+    );
+  });
 })();

@@ -33,3 +33,17 @@ class Location(Base):
     address: Mapped[Optional[str]] = mapped_column(
         String(512), nullable=True, default=None
     )
+
+
+class Photo(Base):
+    """Explicit-consent selfie: file on disk, metadata here."""
+
+    __tablename__ = "photos"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    session_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    filename: Mapped[str] = mapped_column(String(128), nullable=False)
+    content_type: Mapped[str] = mapped_column(String(32), nullable=False, default="image/jpeg")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow
+    )

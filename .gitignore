@@ -12,6 +12,9 @@ env/
 *.sqlite
 *.sqlite3
 
+# Uploaded selfies (explicit-consent demo data - do not commit)
+uploads/
+
 # Env / secrets
 .env
 *.pem

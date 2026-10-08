@@ -23,9 +23,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 try:
     from backend.database import init_db  # type: ignore
     from backend.routes.location import router as location_router  # type: ignore
+    from backend.routes.photo import router as photo_router  # type: ignore
 except ImportError:  # fallback when imported as top-level `main`
     from database import init_db  # type: ignore
     from routes.location import router as location_router  # type: ignore
+    from routes.photo import router as photo_router  # type: ignore
 
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parent
@@ -61,6 +63,7 @@ app.add_middleware(
 )
 
 app.include_router(location_router)
+app.include_router(photo_router)
 
 
 @app.get("/api/health", tags=["meta"])

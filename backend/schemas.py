@@ -66,3 +66,13 @@ class StatsResponse(BaseModel):
     last_received_at: Optional[str] = None
     avg_accuracy: Optional[float] = None
     active_sessions: int = 0
+
+
+class PhotoResponse(BaseModel):
+    id: int
+    session_id: str
+    created_at: Optional[str] = None
+    content_type: str = "image/jpeg"
+    url: str = ""
+
+    model_config = {"from_attributes": True}
