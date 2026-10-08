@@ -1,0 +1,4 @@
+# Root requirements for Vercel serverless deploy (see backend/requirements.txt for local dev).
+fastapi>=0.104.0
+sqlalchemy>=2.0.0
+pydantic>=2.0.0

@@ -189,34 +189,31 @@ curl http://127.0.0.1:8000/api/health
 curl -X POST http://127.0.0.1:8000/api/location -H "Content-Type: application/json" -d '{"latitude":999,"longitude":0,"accuracy":0,"timestamp":"2026-10-08T00:00:00Z","session_id":"sess_test1234"}' -i
 ```
 
-## 6. Deployment instructions (live: GitHub + Render)
+## 6. Deployment instructions (live: GitHub + Vercel)
 
-**Live app = Render (free, with HTTPS). Code = GitHub.**
+**Live app = Vercel (free, always-on HTTPS link, no sleep). Code = GitHub.**
 
-1. Push this folder to GitHub (already done if you used the provided commands):
-   ```bash
-   cd empire-security
-   git init; git add -A; git commit -m "Empire Security Demo"
-   gh repo create empire-security-demo --public --source=. --push
-   ```
-2. Go to **https://dashboard.render.com** (free account) → **New +** → **Web Service** →
-   **Build and deploy from a Git repository** → connect `empire-security-demo`.
-   - Build Command: `pip install -r backend/requirements.txt`
-   - Start Command: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
-   - (Or use **New → Blueprint** — `render.yaml` in this repo does it automatically.)
-3. Deploy finishes → you get `https://empire-security-demo.onrender.com`:
-   - Landing: `https://<your-app>.onrender.com/`
-   - Dashboard: `https://<your-app>.onrender.com/dashboard/`
-4. Share the **landing link** (or use the dashboard's Send Link box — it auto-builds
-   the link from wherever the dashboard is opened).
+Live URLs:
+- Landing: `https://empire-security.vercel.app/`
+- Dashboard: `https://empire-security.vercel.app/dashboard/`
+
+How it stays permanent:
+- The app runs as a serverless FastAPI service (`vercel.json` → `backend.main:app`).
+- Location data is stored in a private GitHub Gist (`GIST_ID` + `GH_TOKEN` env vars),
+  so check-ins survive restarts — open the dashboard hours later, data is still there.
+- Local laptop run still uses SQLite automatically (no env vars = SQLite mode).
+
+Redeploy after code changes:
+```bash
+cd empire-security
+vercel deploy --prod --yes
+```
 
 Notes:
-- HTTPS is automatic on Render — browser geolocation works on phones too
-  (plain `http://192.168...` LAN links are blocked by mobile browsers).
-- Free Render sleeps after inactivity → first open takes ~50s (cold start).
-- Free Render has NO persistent disk → `empire_security.db` resets on
-  restart/redeploy. Fine for demos; use Render Postgres + change
-  `DATABASE_URL` for permanent storage.
+- HTTPS is automatic on Vercel — phone browsers allow geolocation (plain
+  `http://192.168...` LAN links are blocked by mobile browsers).
+- Old alternative: `render.yaml` is kept for Render deploys, but Render's free
+  tier now requires a card on file and its disk is ephemeral.
 
 ## 7. Known limitations
 

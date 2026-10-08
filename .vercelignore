@@ -1,0 +1,13 @@
+# Keep secrets and local junk out of the Vercel bundle.
+.git/
+.gitignore
+__pycache__/
+*.pyc
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+uploads/
+backend/__pycache__/
+backend/routes/__pycache__/
+Empire_Security_Demo_Presentation.pptx

@@ -1,4 +1,4 @@
-"""Location API routes.
+"""Location API routes (storage-agnostic: SQLite local / Gist cloud).
 
 POST /api/location        - store one consented browser fix
 GET  /api/locations       - list recent fixes (newest first)
@@ -12,18 +12,14 @@ import urllib.request
 from collections import defaultdict
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from sqlalchemy import desc, func
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException, Query, Request, status
 
 try:
-    from backend.database import get_db
-    from backend.models import Location
     from backend.schemas import LocationCreate, LocationResponse, StatsResponse
+    from backend.store import get_store
 except ImportError:  # running as top-level `main` with cwd=backend/
-    from database import get_db  # type: ignore
-    from models import Location  # type: ignore
     from schemas import LocationCreate, LocationResponse, StatsResponse  # type: ignore
+    from store import get_store  # type: ignore
 
 router = APIRouter(prefix="/api", tags=["locations"])
 
@@ -46,20 +42,6 @@ def _check_post_rate_limit(request: Request) -> None:
         )
     hits.append(now)
     _RATE[client] = hits
-
-
-def _to_response(loc: Location) -> LocationResponse:
-    created = loc.created_at.isoformat() if loc.created_at else None
-    return LocationResponse(
-        id=loc.id,
-        session_id=loc.session_id,
-        latitude=loc.latitude,
-        longitude=loc.longitude,
-        accuracy=loc.accuracy,
-        timestamp=loc.timestamp,
-        created_at=created,
-        address=loc.address,
-    )
 
 
 def reverse_geocode(lat: float, lon: float, timeout_s: float = 4.0) -> Optional[str]:
@@ -105,12 +87,10 @@ def reverse_geocode(lat: float, lon: float, timeout_s: float = 4.0) -> Optional[
     status_code=status.HTTP_201_CREATED,
     summary="Store a user-consented location fix",
 )
-def create_location(
-    payload: LocationCreate, request: Request, db: Session = Depends(get_db)
-):
+def create_location(payload: LocationCreate, request: Request):
     _check_post_rate_limit(request)
     address = reverse_geocode(payload.latitude, payload.longitude)
-    loc = Location(
+    record = get_store().create(
         session_id=payload.session_id,
         latitude=payload.latitude,
         longitude=payload.longitude,
@@ -118,10 +98,7 @@ def create_location(
         timestamp=payload.timestamp,
         address=address,
     )
-    db.add(loc)
-    db.commit()
-    db.refresh(loc)
-    return _to_response(loc)
+    return LocationResponse(**record)
 
 
 @router.get(
@@ -132,16 +109,8 @@ def create_location(
 def list_locations(
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
-    db: Session = Depends(get_db),
 ):
-    rows = (
-        db.query(Location)
-        .order_by(desc(Location.id))
-        .offset(offset)
-        .limit(limit)
-        .all()
-    )
-    return [_to_response(r) for r in rows]
+    return [LocationResponse(**r) for r in get_store().list(limit=limit, offset=offset)]
 
 
 @router.get(
@@ -149,11 +118,11 @@ def list_locations(
     response_model=LocationResponse,
     summary="Fetch a single location by id",
 )
-def get_location(location_id: int, db: Session = Depends(get_db)):
-    loc = db.query(Location).filter(Location.id == location_id).first()
-    if not loc:
+def get_location(location_id: int):
+    record = get_store().get(location_id)
+    if not record:
         raise HTTPException(status_code=404, detail="Location not found")
-    return _to_response(loc)
+    return LocationResponse(**record)
 
 
 @router.delete(
@@ -161,28 +130,20 @@ def get_location(location_id: int, db: Session = Depends(get_db)):
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a single location by id",
 )
-def delete_location(location_id: int, db: Session = Depends(get_db)):
-    loc = db.query(Location).filter(Location.id == location_id).first()
-    if not loc:
+def delete_location(location_id: int):
+    if not get_store().delete(location_id):
         raise HTTPException(status_code=404, detail="Location not found")
-    db.delete(loc)
-    db.commit()
     return None
 
 
 @router.get("/stats", response_model=StatsResponse, summary="Dashboard aggregates")
-def get_stats(db: Session = Depends(get_db)):
-    total: int = db.query(func.count(Location.id)).scalar() or 0
-    latest_row = db.query(Location).order_by(desc(Location.id)).first()
-    avg_acc = db.query(func.avg(Location.accuracy)).scalar()
-    active = db.query(func.count(func.distinct(Location.session_id))).scalar() or 0
-
-    latest = _to_response(latest_row) if latest_row else None
-    last_received = latest.created_at if latest else None
+def get_stats():
+    s = get_store().stats()
+    latest = LocationResponse(**s["latest"]) if s["latest"] else None
     return StatsResponse(
-        total=total,
+        total=s["total"],
         latest=latest,
-        last_received_at=last_received,
-        avg_accuracy=float(avg_acc) if avg_acc is not None else None,
-        active_sessions=int(active),
+        last_received_at=s["last_received_at"],
+        avg_accuracy=s["avg_accuracy"],
+        active_sessions=s["active_sessions"],
     )

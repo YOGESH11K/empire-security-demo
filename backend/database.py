@@ -30,6 +30,10 @@ def get_db():
 
 
 def init_db() -> None:
+    import os
+
+    if os.environ.get("GIST_ID") and os.environ.get("GH_TOKEN"):
+        return  # cloud mode (Vercel): gist store, no local SQLite writes
     try:
         from backend import models  # noqa: F401  (package mode)
     except ImportError:
