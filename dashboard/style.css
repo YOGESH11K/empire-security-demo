@@ -89,14 +89,6 @@ td.del button {
 }
 .copy-msg { min-height: 20px; font-size: 0.85rem; color: #4ade80; margin-top: 8px; }
 
-.photo-grid { display: flex; gap: 10px; flex-wrap: wrap; }
-.photo-grid a { display: block; width: 130px; text-decoration: none; }
-.photo-grid img {
-  width: 130px; height: 130px; object-fit: cover;
-  border-radius: 10px; border: 1px solid #3b82f6; background: #020617;
-}
-.photo-grid .cap { color: #93c5fd; font-size: 0.72rem; margin-top: 2px; word-break: break-word; }
-
 .live-row { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 8px; }
 .live-row button {
   background: #1e3a5f; color: #fff;

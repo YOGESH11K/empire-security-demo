@@ -160,19 +160,6 @@ curl -X DELETE http://127.0.0.1:8000/api/location/1 -i
 {"total": 3, "latest": {...}, "last_received_at": "...", "avg_accuracy": 21.5, "active_sessions": 2}
 ```
 
-### POST /api/photo — upload one explicitly-consented selfie (multipart)
-
-Form fields: `session_id` (same rules as above) + `file` (JPEG/PNG/WEBP, max 3 MB,
-magic-byte verified, stored with a random filename under `backend/uploads/`).
-
-```bash
-curl -X POST http://127.0.0.1:8000/api/photo \
-  -F session_id=sess_demo1234 -F file=@selfie.jpg
-# -> {"id":1,"session_id":"sess_demo1234","created_at":"...","content_type":"image/jpeg","url":"/api/photos/1/file"}
-```
-
-### GET /api/photos?limit=24 — newest first · GET /api/photos/{id}/file — image bytes · DELETE /api/photo/{id} — 204
-
 ### GET /api/health
 
 ```json

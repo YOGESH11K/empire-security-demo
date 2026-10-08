@@ -175,31 +175,6 @@
 
   var liveRow = document.getElementById("liveRow");
   var liveDetail = document.getElementById("liveDetail");
-  var photoGrid = document.getElementById("photoGrid");
-
-  function renderPhotos(list) {
-    photoGrid.innerHTML = "";
-    if (!list.length) {
-      photoGrid.innerHTML = '<span class="muted-line">No selfies yet.</span>';
-      return;
-    }
-    list.forEach(function (p) {
-      var a = document.createElement("a");
-      a.href = API_BASE + p.url;
-      a.target = "_blank";
-      a.rel = "noopener";
-      var img = document.createElement("img");
-      img.src = API_BASE + p.url;
-      img.alt = "Selfie " + p.id;
-      img.loading = "lazy";
-      a.appendChild(img);
-      var cap = document.createElement("div");
-      cap.className = "cap";
-      cap.textContent = "#" + p.id + " • " + (p.created_at || "");
-      a.appendChild(cap);
-      photoGrid.appendChild(a);
-    });
-  }
 
   // One button per person (latest check-in per session, newest first).
   // Tap -> map jumps to that person, popup opens, full detail shows below.
@@ -283,12 +258,6 @@
         renderMarkers(list);
         renderTable(list);
         renderLive(list);
-        return fetch(API_BASE + "/api/photos?limit=24").then(function (r) {
-          return r.ok ? r.json() : [];
-        });
-      })
-      .then(function (photos) {
-        renderPhotos(photos || []);
         var now = new Date().toLocaleTimeString();
         setIndicator(true, "updated " + now + " · polling every 5s");
       })

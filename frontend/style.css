@@ -114,42 +114,6 @@ h1 {
 
 .consent-note summary { cursor: pointer; font-weight: 600; }
 
-.cam-box {
-  margin: 14px 0 4px;
-  padding: 14px;
-  border: 1px dashed #94a3b8;
-  border-radius: 12px;
-  background: #f8fafc;
-}
-
-.cam-title { font-weight: 800; margin: 0 0 4px; }
-.cam-note { color: var(--muted); font-size: 0.88rem; margin: 0 0 10px; }
-
-#camPreview {
-  width: 100%;
-  border-radius: 10px;
-  background: #000;
-  margin-bottom: 10px;
-}
-
-.cam-btns { display: flex; gap: 8px; flex-wrap: wrap; }
-
-.cam-btn {
-  flex: 1;
-  min-width: 100px;
-  padding: 12px;
-  font-weight: 800;
-  color: var(--ink);
-  background: #e2e8f0;
-  border: 0;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.cam-btn.primary { background: linear-gradient(180deg, var(--accent), var(--accent-dark)); color: #fff; }
-
-#camStatus { margin-top: 10px; }
-
 .footer {
   margin-top: 16px;
   color: rgba(255, 255, 255, 0.85);
