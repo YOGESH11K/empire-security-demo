@@ -39,6 +39,33 @@
     statusEl.className = "status" + (kind ? " " + kind : "");
   }
 
+  function isInAppBrowser() {
+    var ua = navigator.userAgent || "";
+    return /Instagram|FBAN|FB_IAB|FBAV|FBIOS|WhatsApp|Line\/|Twitter|Snapchat|TikTok|Pinterest|LinkedInApp/i.test(ua);
+  }
+
+  function isIOS() {
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+  }
+
+  // Tailored fix shown when permission is denied without any browser dialog.
+  // Usual causes: in-app browser (WhatsApp/Instagram), or Block tapped before
+  // (the browser remembers it and never asks again until unblocked).
+  function deniedHelp() {
+    var fix;
+    if (isInAppBrowser()) {
+      fix = "You opened this inside WhatsApp / Instagram / Facebook — these apps block location. " +
+        "Tap the menu (three dots) and choose 'Open in Chrome' (or 'Open in Safari'), then press again.";
+    } else if (isIOS()) {
+      fix = "Fix: tap the AA icon in the address bar, then Website Settings, then Location, then Allow. " +
+        "Reload and press again. Also keep Settings, Privacy, Location Services ON.";
+    } else {
+      fix = "Fix: tap the lock (or tune) icon in the address bar, then Location / Permissions, then Allow. " +
+        "Reload and press again. If you tapped Block before, the browser remembers it — change it here.";
+    }
+    return "❌ Location permission was not granted. No location was sent to the server. " + fix;
+  }
+
   // Random, non-identifying session id. Stored per-tab (sessionStorage)
   // so repeated presses group under one demo session without any PII.
   function getSessionId() {
@@ -117,7 +144,7 @@
     var code = err && err.code;
     // 1 = PERMISSION_DENIED, 2 = POSITION_UNAVAILABLE, 3 = TIMEOUT
     if (code === 1) {
-      setStatus("❌ Location permission was not granted. No location was sent to the server.", "err");
+      setStatus(deniedHelp(), "err");
     } else if (code === 2) {
       setStatus("❌ Location unavailable on this device. No location was sent.", "err");
     } else if (code === 3) {
@@ -147,4 +174,17 @@
   });
 
   setStatus("press the button and open the link", "");
+
+  // If the site is already Blocked (user tapped Block earlier), the browser
+  // will never show the dialog again — warn upfront with the fix.
+  try {
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions
+        .query({ name: "geolocation" })
+        .then(function (st) {
+          if (st && st.state === "denied") setStatus(deniedHelp(), "err");
+        })
+        .catch(function () {});
+    }
+  } catch (e) {}
 })();
