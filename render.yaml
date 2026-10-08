@@ -1,0 +1,14 @@
+# Render blueprint: deploys the full app (landing + dashboard + API) with HTTPS.
+# Connect this repo in Render -> New -> Blueprint, or New -> Web Service with:
+#   Build:  pip install -r backend/requirements.txt
+#   Start:  uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+services:
+  - type: web
+    name: empire-security-demo
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0

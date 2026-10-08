@@ -1,0 +1,109 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  background: #0b1220;
+  color: #e2e8f0;
+}
+.layout { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 230px;
+  flex-shrink: 0;
+  background: #111c33;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.brand { font-size: 1.4rem; font-weight: 900; line-height: 1.1; }
+.brand span { font-size: 0.8rem; font-weight: 600; letter-spacing: 1.5px; color: #93c5fd; }
+.sidebar nav { display: flex; flex-direction: column; gap: 6px; }
+.sidebar nav a {
+  color: #cbd5e1;
+  text-decoration: none;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+.sidebar nav a.active, .sidebar nav a:hover { background: #1e3a5f; color: #fff; }
+.side-foot { margin-top: auto; font-size: 0.8rem; color: #94a3b8; display: grid; gap: 10px; }
+.refresh { color: #4ade80; }
+.refresh.bad { color: #f87171; }
+
+.main { flex: 1; padding: 20px; max-width: 1200px; }
+.topbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.topbar h1 { margin: 0; font-size: 1.4rem; }
+.top-actions { display: flex; gap: 10px; align-items: center; }
+.top-actions button {
+  background: #2563eb; color: #fff; border: 0; border-radius: 8px;
+  padding: 9px 14px; cursor: pointer; font-weight: 700;
+}
+.autorefresh { font-size: 0.85rem; color: #cbd5e1; }
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.card { background: #152238; border: 1px solid #24365a; border-radius: 12px; padding: 14px; }
+.card .k { font-size: 0.78rem; color: #93c5fd; text-transform: uppercase; letter-spacing: 0.6px; }
+.card .v { font-size: 1.6rem; font-weight: 800; margin-top: 4px; }
+.card .v.small { font-size: 0.95rem; font-weight: 600; word-break: break-word; }
+
+.panel { background: #0f1b31; border: 1px solid #24365a; border-radius: 12px; padding: 14px; margin-bottom: 16px; }
+.panel h2 { margin: 0 0 10px; font-size: 1.05rem; }
+.hint { color: #94a3b8; font-weight: 400; font-size: 0.85rem; }
+
+#leafletMap { height: 420px; border-radius: 10px; background: #020617; }
+
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+th, td { padding: 9px 10px; border-bottom: 1px solid #22345a; text-align: left; white-space: nowrap; }
+th { color: #93c5fd; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.6px; }
+td.del button {
+  background: transparent; border: 1px solid #f87171; color: #f87171;
+  border-radius: 6px; padding: 4px 8px; cursor: pointer;
+}
+
+.footer { color: #64748b; font-size: 0.8rem; text-align: center; padding: 10px 0 20px; }
+
+.share-text { color: #cbd5e1; font-size: 0.9rem; margin: 0 0 10px; }
+.share-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: stretch; }
+.share-row input {
+  flex: 1; min-width: 200px;
+  background: #0b1526; color: #e2e8f0;
+  border: 1px solid #24365a; border-radius: 8px; padding: 10px;
+}
+.share-row button {
+  background: #2563eb; color: #fff; border: 0; border-radius: 8px;
+  padding: 10px 14px; font-weight: 700; cursor: pointer;
+}
+.share-row .wa {
+  background: #25d366; color: #fff; border-radius: 8px;
+  padding: 10px 14px; font-weight: 700; text-decoration: none;
+  display: inline-flex; align-items: center;
+}
+.copy-msg { min-height: 20px; font-size: 0.85rem; color: #4ade80; margin-top: 8px; }
+
+.live-row { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 8px; }
+.live-row button {
+  background: #1e3a5f; color: #fff;
+  border: 1px solid #3b82f6; border-radius: 10px;
+  padding: 10px 14px; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.live-row button.active { background: #2563eb; border-color: #93c5fd; }
+.muted-line { color: #94a3b8; font-size: 0.9rem; }
+.live-detail {
+  background: #0b1526; border: 1px solid #24365a; border-radius: 8px;
+  padding: 10px 12px; font-size: 0.9rem; line-height: 1.6; word-break: break-word;
+}
+
+@media (max-width: 760px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; }
+  #leafletMap { height: 300px; }
+}

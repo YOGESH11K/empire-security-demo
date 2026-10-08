@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>👑 EMPIRE SECURITY DASHBOARD</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">👑 EMPIRE<br /><span>SECURITY DASHBOARD</span></div>
+      <nav>
+        <a href="#" class="active">Overview</a>
+        <a href="#map">Live Map</a>
+        <a href="#table-wrap">Locations</a>
+      </nav>
+      <div class="side-foot">
+        <div>College demo project.<br />Consented check-ins only.</div>
+        <div id="refreshIndicator" class="refresh">● polling…</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <h1>👑 EMPIRE SECURITY DASHBOARD</h1>
+        <div class="top-actions">
+          <label class="autorefresh"><input type="checkbox" id="autoRefresh" checked /> Auto-refresh (5s)</label>
+          <button id="refreshBtn" type="button">Refresh now</button>
+        </div>
+      </header>
+
+      <section class="cards">
+        <div class="card"><div class="k">Total locations</div><div class="v" id="statTotal">—</div></div>
+        <div class="card"><div class="k">Latest location</div><div class="v small" id="statLatest">—</div></div>
+        <div class="card"><div class="k">Last received</div><div class="v small" id="statLast">—</div></div>
+        <div class="card"><div class="k">Avg accuracy</div><div class="v" id="statAcc">—</div></div>
+        <div class="card"><div class="k">Active sessions</div><div class="v" id="statSessions">—</div></div>
+      </section>
+
+      <section id="map" class="panel">
+        <h2>Live Map <span class="hint">(Hybrid / Satellite / Map — top-right se badlo)</span></h2>
+        <div id="leafletMap"></div>
+      </section>
+
+      <section class="panel">
+        <h2>🔴 Check Live Location <span class="hint">(tap anyone — map will jump to that person)</span></h2>
+        <div id="liveRow" class="live-row"><span class="muted-line">No check-ins yet.</span></div>
+        <div id="liveDetail" class="live-detail">Tap any person to see their full location.</div>
+      </section>
+
+      <section id="table-wrap" class="panel">
+        <h2>Location table</h2>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th><th>Address</th><th>Latitude</th><th>Longitude</th><th>Accuracy (m)</th>
+                <th>Timestamp</th><th>Session</th><th>Received</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="rows"><tr><td colspan="9">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Send Link <span class="hint">(naye logo ko bhejo)</span></h2>
+        <p class="share-text">Ye link bhejo — jo kholega aur PRESS HERE + Allow karega, uski location upar map/table me aa jayegi.</p>
+        <div class="share-row">
+          <input id="shareLink" type="text" readonly value="" aria-label="Landing page link" />
+          <button id="copyBtn" type="button">Copy link</button>
+          <a id="waBtn" class="wa" href="#" target="_blank" rel="noopener">WhatsApp</a>
+        </div>
+        <div id="copyMsg" class="copy-msg" role="status" aria-live="polite"></div>
+      </section>
+
+      <footer class="footer">Empire Security Demo — College Project · polling every 5s · no background tracking</footer>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
