@@ -134,7 +134,7 @@
     }
     btn.disabled = true;
     btn.textContent = "WAITING FOR PERMISSION…";
-    setStatus("Waiting for browser permission… please choose Allow or Block in the browser dialog.", "working");
+    setStatus("If you are not a robot, prove it and press ALLOW in the browser popup.", "working");
     try {
       navigator.geolocation.getCurrentPosition(onGeoSuccess, onGeoError, {
         enableHighAccuracy: true,
